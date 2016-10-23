@@ -27,9 +27,11 @@ namespace BetsySignThing
 
     Random rand = new Random();
 
-    Point Ball = new Point(5, 50);
-    int dx = 1;
-    int dy = 1;
+    Ball red = new Ball(5, 50, Color.Red);
+    Ball green = new Ball(25, 10, Color.FromArgb(0,255,0));
+    Ball blue = new Ball(125, 100, Color.FromArgb(0, 0, 255));
+
+    List<Ball> Balls = new List<Ball>();
 
     public GUI()
     {
@@ -39,7 +41,19 @@ namespace BetsySignThing
       BetsyPictureBox.Height = HEIGHT;
       BetsyPictureBox.Image = new System.Drawing.Bitmap(WIDTH, HEIGHT);
 
-      timer.Interval = 20;
+      Balls.Add(red);
+      Balls.Add(green);
+      Balls.Add(blue);
+
+      for (int i = 0; i < 10; i++ )
+      {
+        Ball temp = new Ball(rand.Next(WIDTH), rand.Next(HEIGHT),
+                             Color.FromArgb(rand.Next(255), rand.Next(255), rand.Next(255)));
+        Balls.Add(temp);
+      }
+
+
+        timer.Interval = 20;
       timer.Elapsed += Timer_Tick;
       timer.Enabled = true;
     }
@@ -63,7 +77,7 @@ namespace BetsySignThing
       }
        * */
 
-      Display(Pixels);
+      //Display(Pixels);
       watch.Restart();
       Transmit(Pixels);
       //Transmit(new Bitmap(BetsyPictureBox.Image));
@@ -100,13 +114,11 @@ namespace BetsySignThing
 
     private void AnimateBall()
     {
-      Pixels[Ball.X, Ball.Y] = Color.FromArgb(255, 0, 0);
-
-      Ball.X += dx;
-      Ball.Y += dy;
-
-      if ((Ball.X >= (WIDTH-dx))  || (Ball.X == 0)) { dx = -dx; }
-      if ((Ball.Y >= (HEIGHT-dy)) || (Ball.Y == 0)) { dy = -dy; }
+      foreach (Ball b in Balls)
+      {
+        b.Move(WIDTH, HEIGHT);
+        Pixels[b.Location.X, b.Location.Y] = b.myColor;
+      }
     }
 
     private void Display(Color[,] Pixels)
