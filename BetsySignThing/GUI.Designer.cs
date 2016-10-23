@@ -28,6 +28,7 @@
     /// </summary>
     private void InitializeComponent()
     {
+      System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GUI));
       this.BetsyPictureBox = new System.Windows.Forms.PictureBox();
       this.TimerLabel = new System.Windows.Forms.Label();
       ((System.ComponentModel.ISupportInitialize)(this.BetsyPictureBox)).BeginInit();
@@ -36,9 +37,10 @@
       // BetsyPictureBox
       // 
       this.BetsyPictureBox.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+      this.BetsyPictureBox.Image = ((System.Drawing.Image)(resources.GetObject("BetsyPictureBox.Image")));
       this.BetsyPictureBox.Location = new System.Drawing.Point(2, 2);
       this.BetsyPictureBox.Name = "BetsyPictureBox";
-      this.BetsyPictureBox.Size = new System.Drawing.Size(234, 181);
+      this.BetsyPictureBox.Size = new System.Drawing.Size(187, 131);
       this.BetsyPictureBox.TabIndex = 0;
       this.BetsyPictureBox.TabStop = false;
       // 

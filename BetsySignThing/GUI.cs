@@ -33,7 +33,7 @@ namespace BetsySignThing
 
       BetsyPictureBox.Width = WIDTH;
       BetsyPictureBox.Height = HEIGHT;
-      BetsyPictureBox.Image = new System.Drawing.Bitmap(WIDTH, HEIGHT);
+     // BetsyPictureBox.Image = new System.Drawing.Bitmap(WIDTH, HEIGHT);
 
       timer.Interval = 100;
       timer.Elapsed += Timer_Tick;
@@ -44,6 +44,7 @@ namespace BetsySignThing
 
     private void Timer_Tick(object sender, System.Timers.ElapsedEventArgs e)
     {
+      /*
       for (int x = 0; x < WIDTH; x++)
       {
         for (int y = 0; y < HEIGHT; y++)
@@ -55,9 +56,11 @@ namespace BetsySignThing
       }
 
       Display(Pixels);
+       * */
 
       watch.Restart();
-      Transmit(Pixels);
+      //Transmit(Pixels);
+      Transmit(new Bitmap(BetsyPictureBox.Image));
 
       try
       {
@@ -100,6 +103,7 @@ namespace BetsySignThing
       }
     }
 
+    [Obsolete]
     private void Transmit_TooFancy(Color[,] Pixels)
     {
       byte[] rgb_bytes = Flatten(Pixels);
@@ -129,13 +133,26 @@ namespace BetsySignThing
       }
     }
 
+    private void Transmit(Bitmap bmp)
+    {
+      for (int x = 0; x < WIDTH; x++)
+      {
+        for (int y = 0; y < HEIGHT; y++)
+        {
+          //Pixels[x, y] = Color.FromArgb(0, 0, 100); // bmp.GetPixel(x, y);
+          Pixels[x, y] = bmp.GetPixel(x, y);
+        }
+      }
 
-  private void Transmit(Color[,] Pixels)
+      Transmit(Pixels);
+    }
+
+    private void Transmit(Color[,] Pixels)
     {
       byte[] rgb_bytes = Flatten(Pixels);
       int num_bytes = rgb_bytes.Length;
 
-      byte[] packet = new byte[num_bytes+6];      
+      byte[] packet = new byte[num_bytes+7];      
 
       int offset = 0;
 
@@ -151,6 +168,7 @@ namespace BetsySignThing
       {
         packet[6 + i] = rgb_bytes[offset++];
       }
+     // packet[num_bytes] = 0x36;
 
       SendUdp("192.168.111.69", 65506, packet);
     }
@@ -165,10 +183,10 @@ namespace BetsySignThing
       byte[] flatrgb = new byte[Pixels.Length * 3];
       int offset = 0;
 
-      for (int x = 0; x < WIDTH; x++)
+      for (int y = 0; y < HEIGHT; y++)
       {
-        for (int y = 0; y < HEIGHT; y++)
-        {
+        for (int x = 0; x < WIDTH; x++)
+        { 
           flatrgb[offset++] = Pixels[x, y].R;
           flatrgb[offset++] = Pixels[x, y].G;
           flatrgb[offset++] = Pixels[x, y].B;
