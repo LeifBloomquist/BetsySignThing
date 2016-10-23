@@ -14,11 +14,14 @@ namespace BetsySignThing
 {
   public partial class GUI : Form
   {
-    const int WIDTH = 160;
+    const int WIDTH = 162;
     const int HEIGHT = 108;
-    const int FRAME_SIZE = 1490;
+    const int UDP_FRAME_SIZE = 1490;
+    const int IMAGE_SIZE = 1490;
 
     System.Timers.Timer timer = new System.Timers.Timer();
+
+    UdpClient c = new UdpClient(12345);
 
     public Color[,] Pixels = new Color[WIDTH, HEIGHT];
 
@@ -51,15 +54,22 @@ namespace BetsySignThing
         }
       }
 
+      Display(Pixels);
 
       watch.Restart();
-      Display(Pixels);
       Transmit(Pixels);
 
-      this.Invoke(new Action(() =>
+      try
       {
-        TimerLabel.Text = "Elapsed: " + watch.ElapsedMilliseconds;
-      }));
+        this.Invoke(new Action(() =>
+        {
+          TimerLabel.Text = "Elapsed: " + watch.ElapsedMilliseconds;
+        }));
+      }
+      catch (Exception ex)
+      {
+        // Ignore silently
+      }
 
       watch.Stop();
     }
@@ -90,13 +100,13 @@ namespace BetsySignThing
       }
     }
 
-    private void Transmit(Color[,] Pixels)
+    private void Transmit_TooFancy(Color[,] Pixels)
     {
       byte[] rgb_bytes = Flatten(Pixels);
       byte[] packet = new byte[1500];
 
       int num_bytes = rgb_bytes.Length;
-      int num_packets = num_bytes / FRAME_SIZE;
+      int num_packets = num_bytes / UDP_FRAME_SIZE;
 
       int offset = 0;
 
@@ -104,27 +114,50 @@ namespace BetsySignThing
       {
         packet[0] = 0x9C;   // TMP2.NET packet start
         packet[1] = 0xDA;   // Data
-        packet[2] = Utilities.GetHighByte(FRAME_SIZE);
-        packet[3] = Utilities.GetLowByte(FRAME_SIZE);
+        packet[2] = Utilities.GetHighByte(UDP_FRAME_SIZE);
+        packet[3] = Utilities.GetLowByte(UDP_FRAME_SIZE);
         packet[4] = (byte)packet_num;
         packet[5] = (byte)num_packets;
 
         // User data
-        for (int i = 0; i < FRAME_SIZE; i++)
+        for (int i = 0; i < UDP_FRAME_SIZE; i++)
         {
           packet[6 + i] = rgb_bytes[offset++];
         }
 
-        SendUdp(12345, "127.0.0.1", 65506, packet);
+        SendUdp("192.168.111.69", 65506, packet);
       }
     }
 
-    void SendUdp(int srcPort, string dstIp, int dstPort, byte[] data)
+
+  private void Transmit(Color[,] Pixels)
     {
-      using (UdpClient c = new UdpClient(srcPort))
+      byte[] rgb_bytes = Flatten(Pixels);
+      int num_bytes = rgb_bytes.Length;
+
+      byte[] packet = new byte[num_bytes+6];      
+
+      int offset = 0;
+
+      packet[0] = 0x9C;   // TMP2.NET packet start
+      packet[1] = 0xDA;   // Data
+      packet[2] = Utilities.GetHighByte(num_bytes);
+      packet[3] = Utilities.GetLowByte(num_bytes);
+      packet[4] = 0;
+      packet[5] = 0;
+
+      // User data
+      for (int i = 0; i < num_bytes; i++)
       {
-        c.Send(data, data.Length, dstIp, dstPort);
+        packet[6 + i] = rgb_bytes[offset++];
       }
+
+      SendUdp("192.168.111.69", 65506, packet);
+    }
+
+    void SendUdp(string dstIp, int dstPort, byte[] data)
+    {
+        c.Send(data, data.Length, dstIp, dstPort);
     }
 
     private byte[] Flatten(Color[,] Pixels)
