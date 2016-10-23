@@ -17,7 +17,7 @@ namespace BetsySignThing
     const int WIDTH = 162;
     const int HEIGHT = 108;
     const int UDP_FRAME_SIZE = 1490;
-    const int IMAGE_SIZE = 1490;
+    const int IMAGE_SIZE = WIDTH * HEIGHT;
 
     System.Timers.Timer timer = new System.Timers.Timer();
 
@@ -27,15 +27,19 @@ namespace BetsySignThing
 
     Random rand = new Random();
 
+    Point Ball = new Point(5, 50);
+    int dx = 1;
+    int dy = 1;
+
     public GUI()
     {
       InitializeComponent();
 
       BetsyPictureBox.Width = WIDTH;
       BetsyPictureBox.Height = HEIGHT;
-     // BetsyPictureBox.Image = new System.Drawing.Bitmap(WIDTH, HEIGHT);
+      BetsyPictureBox.Image = new System.Drawing.Bitmap(WIDTH, HEIGHT);
 
-      timer.Interval = 100;
+      timer.Interval = 20;
       timer.Elapsed += Timer_Tick;
       timer.Enabled = true;
     }
@@ -44,6 +48,9 @@ namespace BetsySignThing
 
     private void Timer_Tick(object sender, System.Timers.ElapsedEventArgs e)
     {
+      AnimateBall();
+      FadePixels();
+
       /*
       for (int x = 0; x < WIDTH; x++)
       {
@@ -54,13 +61,12 @@ namespace BetsySignThing
                                    (byte)rand.Next(255));
         }
       }
-
-      Display(Pixels);
        * */
 
+      Display(Pixels);
       watch.Restart();
-      //Transmit(Pixels);
-      Transmit(new Bitmap(BetsyPictureBox.Image));
+      Transmit(Pixels);
+      //Transmit(new Bitmap(BetsyPictureBox.Image));
 
       try
       {
@@ -77,16 +83,45 @@ namespace BetsySignThing
       watch.Stop();
     }
 
+    private void FadePixels()
+    {
+      for (int x = 0; x < WIDTH; x++)
+      {
+        for (int y = 0; y < HEIGHT; y++)
+        {
+          int R = (int)(Pixels[x, y].R * 0.9);
+          int G = (int)(Pixels[x, y].G * 0.9);
+          int B = (int)(Pixels[x, y].B * 0.9);
+
+          Pixels[x, y] = Color.FromArgb(R, G, B);
+        }
+      }
+    }
+
+    private void AnimateBall()
+    {
+      Pixels[Ball.X, Ball.Y] = Color.FromArgb(255, 0, 0);
+
+      Ball.X += dx;
+      Ball.Y += dy;
+
+      if ((Ball.X >= (WIDTH-dx))  || (Ball.X == 0)) { dx = -dx; }
+      if ((Ball.Y >= (HEIGHT-dy)) || (Ball.Y == 0)) { dy = -dy; }
+    }
+
     private void Display(Color[,] Pixels)
     {
       Bitmap bmp = (Bitmap)BetsyPictureBox.Image;
       //var g = Graphics.FromImage(bmp);
 
-      for (int x = 0; x < WIDTH; x++)
+      lock (bmp)
       {
-        for (int y = 0; y < HEIGHT; y++)
+        for (int x = 0; x < WIDTH; x++)
         {
-          bmp.SetPixel(x, y, Pixels[x, y]);
+          for (int y = 0; y < HEIGHT; y++)
+          {
+            bmp.SetPixel(x, y, Pixels[x, y]);
+          }
         }
       }
 
