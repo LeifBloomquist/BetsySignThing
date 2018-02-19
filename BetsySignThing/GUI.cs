@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BetsySignThing
@@ -37,8 +32,8 @@ namespace BetsySignThing
     {
       InitializeComponent();
 
-      BetsyPictureBox.Width = WIDTH;
-      BetsyPictureBox.Height = HEIGHT;
+      BetsyPictureBox.Width = WIDTH+5;
+      BetsyPictureBox.Height = HEIGHT+5;
       BetsyPictureBox.Image = new System.Drawing.Bitmap(WIDTH, HEIGHT);
 
       Balls.Add(red);
@@ -53,7 +48,7 @@ namespace BetsySignThing
       }
 
 
-        timer.Interval = 20;
+      timer.Interval = 20;
       timer.Elapsed += Timer_Tick;
       timer.Enabled = true;
     }
@@ -76,11 +71,11 @@ namespace BetsySignThing
         }
       }
        * */
+       
 
-      //Display(Pixels);
+      Display(Pixels);
       watch.Restart();
       Transmit(Pixels);
-      //Transmit(new Bitmap(BetsyPictureBox.Image));
 
       try
       {
@@ -89,9 +84,9 @@ namespace BetsySignThing
           TimerLabel.Text = "Elapsed: " + watch.ElapsedMilliseconds;
         }));
       }
-      catch (Exception ex)
+      catch (Exception)
       {
-        // Ignore silently
+          ; // Ignore silently
       }
 
       watch.Stop();
@@ -116,37 +111,52 @@ namespace BetsySignThing
     {
       foreach (Ball b in Balls)
       {
-        b.Move(WIDTH, HEIGHT);
-        Pixels[b.Location.X, b.Location.Y] = b.myColor;
+          b.Move(WIDTH, HEIGHT);
+
+          try
+          {
+              Pixels[b.Location.X, b.Location.Y] = b.myColor;
+          }
+          catch (Exception)
+          {
+              ;
+          }
       }
     }
 
     private void Display(Color[,] Pixels)
     {
-      Bitmap bmp = (Bitmap)BetsyPictureBox.Image;
-      //var g = Graphics.FromImage(bmp);
+        Bitmap bmp = new Bitmap(WIDTH, HEIGHT);
 
-      lock (bmp)
-      {
         for (int x = 0; x < WIDTH; x++)
         {
-          for (int y = 0; y < HEIGHT; y++)
-          {
-            bmp.SetPixel(x, y, Pixels[x, y]);
-          }
+            for (int y = 0; y < HEIGHT; y++)
+            {
+                try
+                {
+                    bmp.SetPixel(x, y, Pixels[x, y]);
+                }
+                catch (Exception)
+                {
+                    ;
+                }
+            }
         }
-      }
 
       try
       {
         this.Invoke(new Action(() =>
         {
-          BetsyPictureBox.Refresh();
+            if (!this.IsDisposed)
+            {
+                BetsyPictureBox.Image = bmp;
+                BetsyPictureBox.Refresh();
+            }
         }));
       }
-      catch (Exception e)
+      catch (Exception)
       {
-          // Ignore silently
+          ; // Ignore silently
       }
     }
 
